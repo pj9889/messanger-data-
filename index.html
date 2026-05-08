@@ -3,198 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Master Analytics Dashboard - Live</title>
+    <title>Live Multi-Source Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root {
-            --messenger-color: #0084ff;
-            --website-color: #22c55e;
-            --dark-bg: #111827;
-            --card-bg: #1f2937;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--dark-bg);
-            color: #e5e7eb;
-            margin: 0; padding: 20px;
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid #374151;
-        }
-
-        .main-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-        }
-
-        .dashboard-section {
-            background: var(--card-bg);
-            padding: 20px;
-            border-radius: 20px;
-            border: 1px solid #374151;
-        }
-
-        .section-title {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 22px;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid;
-        }
-
-        .stats-cards {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .stat-card {
-            background: #2d3748;
-            padding: 15px;
-            border-radius: 12px;
-            text-align: center;
-        }
-
-        .stat-card small { color: #9ca3af; font-size: 12px; text-transform: uppercase; }
-        .stat-card div { font-size: 24px; font-weight: bold; margin-top: 5px; }
-
-        .chart-container {
-            background: #2d3748;
-            padding: 15px;
-            border-radius: 12px;
-            height: 250px;
-        }
-
-        .live-indicator {
-            display: inline-block;
-            width: 10px;
-            height: 10px;
-            background: #ff4d4d;
-            border-radius: 50%;
-            margin-right: 5px;
-            animation: blink 1s infinite;
-        }
-
-        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
-
-        @media (max-width: 900px) {
-            .main-grid { grid-template-columns: 1fr; }
-        }
+        :root { --messenger: #0084ff; --website: #22c55e; --dark: #0f172a; --card: #1e293b; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: #f8fafc; margin: 0; padding: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding-bottom: 15px; margin-bottom: 25px; }
+        .main-container { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
+        .section { background: var(--card); padding: 20px; border-radius: 15px; border: 1px solid #334155; }
+        .title { font-size: 20px; font-weight: bold; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .stat-box { background: #0f172a; padding: 15px; border-radius: 10px; text-align: center; border: 1px solid #334155; }
+        .stat-box small { color: #94a3b8; font-size: 12px; }
+        .stat-box div { font-size: 22px; font-weight: bold; margin-top: 5px; }
+        .chart-wrap { height: 200px; position: relative; }
+        .live-dot { height: 10px; width: 10px; background: #ef4444; border-radius: 50%; display: inline-block; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+        @media (max-width: 900px) { .main-container { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <h1><i class="fa-solid fa-tower-broadcast"></i> Master Live Dashboard</h1>
-    <p><span class="live-indicator"></span> অটো-আপডেট হচ্ছে (প্রতি ৩০ সেকেন্ড)</p>
+    <h2><i class="fa-solid fa-chart-pie"></i> Combined Live Analytics</h2>
+    <div><span class="live-dot"></span> Live Updating</div>
 </div>
 
-<div class="main-grid">
-    
-    <!-- MESSENGER SECTION -->
-    <div class="dashboard-section">
-        <div class="section-title" style="border-color: var(--messenger-color); color: var(--messenger-color);">
-            <i class="fa-brands fa-facebook-messenger"></i> Messenger Data
+<div class="main-container">
+    <!-- MESSENGER SECTION (Array Format) -->
+    <div class="section">
+        <div class="title" style="color: var(--messenger);"><i class="fa-brands fa-facebook-messenger"></i> Messenger Data</div>
+        <div class="stats-grid">
+            <div class="stat-box"><small>Total Visit</small><div id="m_v">0</div></div>
+            <div class="stat-box"><small>Button Click</small><div id="m_c">0</div></div>
         </div>
-        <div class="stats-cards">
-            <div class="stat-card"><small>ভিজিটর</small><div id="m_v">0</div></div>
-            <div class="stat-card"><small>মেসেজ</small><div id="m_m">0</div></div>
-            <div class="stat-card"><small>ভিডিও কল</small><div id="m_vc">0</div></div>
-            <div class="stat-card"><small>রেজিস্ট্রেশন</small><div id="m_r">0</div></div>
-        </div>
-        <div class="chart-container">
-            <canvas id="chartMessenger"></canvas>
-        </div>
+        <div class="chart-wrap"><canvas id="mChart"></canvas></div>
     </div>
 
-    <!-- WEBSITE SECTION -->
-    <div class="dashboard-section">
-        <div class="section-title" style="border-color: var(--website-color); color: var(--website-color);">
-            <i class="fa-solid fa-globe"></i> Website Data
+    <!-- WEBSITE SECTION (Object Format) -->
+    <div class="section">
+        <div class="title" style="color: var(--website);"><i class="fa-solid fa-globe"></i> Website Data</div>
+        <div class="stats-grid">
+            <div class="stat-box"><small>Visitor</small><div id="w_v">0</div></div>
+            <div class="stat-box"><small>Register</small><div id="w_r">0</div></div>
         </div>
-        <div class="stats-cards">
-            <div class="stat-card"><small>ভিজিটর</small><div id="w_v">0</div></div>
-            <div class="stat-card"><small>মেসেজ</small><div id="w_m">0</div></div>
-            <div class="stat-card"><small>ভিডিও কল</small><div id="w_vc">0</div></div>
-            <div class="stat-card"><small>রেজিস্ট্রেশন</small><div id="w_r">0</div></div>
-        </div>
-        <div class="chart-container">
-            <canvas id="chartWebsite"></canvas>
-        </div>
+        <div class="chart-wrap"><canvas id="wChart"></canvas></div>
     </div>
-
 </div>
 
 <script>
-    // আপনার API লিঙ্কগুলো এখানে দিন
-    const API_MESSENGER = "https://script.google.com/macros/s/AKfycbzXIlowODRnKPfVwnRmdBEOWPQ9SYtjLzSnuZxtBiiue3c6LbdC-wggDBimdLYLtAi-/exec";
-    const API_WEBSITE = "YOUR_SECOND_WEBSITE_API_URL_HERE";
+    const URL_MESSENGER = 'https://script.google.com/macros/s/AKfycbzGeBPV1jHM2Y2gsM9to5eaKtVIntwXwooQqvf6wWKEWIAsLIpbM9ij0IPDxKpwRRkV/exec';
+    const URL_WEBSITE = 'https://script.google.com/macros/s/AKfycbzXIlowODRnKPfVwnRmdBEOWPQ9SYtjLzSnuZxtBiiue3c6LbdC-wggDBimdLYLtAi-/exec';
 
-    let chartM, chartW;
+    let m_chart, w_chart;
 
-    async function updateDashboard(url, prefix, chartVar) {
+    // Messenger Data লোড করার ফাংশন (যেটা Array ফরম্যাটে আসে)
+    async function loadMessenger() {
         try {
-            const res = await fetch(url);
+            const res = await fetch(URL_MESSENGER);
+            const data = await res.json();
+            const visits = data.filter(d => d.event === 'Total_Visit').length;
+            const clicks = data.filter(d => d.event === 'Button_Click').length;
+
+            document.getElementById('m_v').innerText = visits;
+            document.getElementById('m_c').innerText = clicks;
+
+            updateChart('mChart', m_chart, [visits, clicks], ['Visits', 'Clicks'], varName => m_chart = varName, '#0084ff');
+        } catch (e) { console.error("Messenger Error:", e); }
+    }
+
+    // Website Data লোড করার ফাংশন (যেটা সরাসরি Object ফরম্যাটে আসে)
+    async function loadWebsite() {
+        try {
+            const res = await fetch(URL_WEBSITE);
             const data = await res.json();
 
-            // টেক্সট আপডেট
-            document.getElementById(`${prefix}_v`).innerText = data.visitor || 0;
-            document.getElementById(`${prefix}_m`).innerText = data.message || 0;
-            document.getElementById(`${prefix}_vc`).innerText = data.video || 0;
-            document.getElementById(`${prefix}_r`).innerText = data.register || 0;
+            document.getElementById('w_v').innerText = data.visitor;
+            document.getElementById('w_r').innerText = data.register;
 
-            // চার্ট আপডেট
-            const ctx = document.getElementById(prefix === 'm' ? 'chartMessenger' : 'chartWebsite').getContext('2d');
-            const chartData = [data.visitor, data.message, data.video, data.register];
-            const color = prefix === 'm' ? '#0084ff' : '#22c55e';
-
-            if (window[chartVar]) {
-                window[chartVar].data.datasets[0].data = chartData;
-                window[chartVar].update();
-            } else {
-                window[chartVar] = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: ['ভিজিটর', 'মেসেজ', 'ভিডিও কল', 'রেজিস্ট্রেশন'],
-                        datasets: [{
-                            label: 'Live Stats',
-                            data: chartData,
-                            backgroundColor: color,
-                            borderRadius: 5
-                        }]
-                    },
-                    options: { 
-                        responsive: true, 
-                        maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
-                        scales: { y: { grid: { color: '#374151' }, ticks: { color: '#9ca3af' } } }
-                    }
-                });
-            }
-        } catch (e) { console.error("Error fetching " + prefix, e); }
+            updateChart('wChart', w_chart, [data.visitor, data.register, data.message], ['Visitor', 'Reg', 'Msg'], varName => w_chart = varName, '#22c55e');
+        } catch (e) { console.error("Website Error:", e); }
     }
 
-    function refreshAll() {
-        updateDashboard(API_MESSENGER, 'm', 'chartM');
-        updateDashboard(API_WEBSITE, 'w', 'chartW');
+    function updateChart(canvasId, chartVar, dataPoints, labels, setChart, color) {
+        const ctx = document.getElementById(canvasId).getContext('2d');
+        if (chartVar) {
+            chartVar.data.datasets[0].data = dataPoints;
+            chartVar.update();
+        } else {
+            const newChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{ data: dataPoints, backgroundColor: color, borderRadius: 5 }]
+                },
+                options: { maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+            setChart(newChart);
+        }
     }
 
-    // প্রথমবার লোড
-    refreshAll();
-
-    // প্রতি ৩০ সেকেন্ডে লাইভ ডাটা আপডেট হবে
-    setInterval(refreshAll, 30000);
+    function refresh() { loadMessenger(); loadWebsite(); }
+    
+    refresh(); 
+    setInterval(refresh, 30000); // ৩০ সেকেন্ড পর পর আপডেট হবে
 </script>
-
 </body>
 </html>
