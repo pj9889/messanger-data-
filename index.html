@@ -8,62 +8,39 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --primary: #0084ff; --bg: #0b0e11; --card: #1c2128; }
-        body { background: var(--bg); color: #fff; font-family: sans-serif; padding: 10px; }
-        .header { display: flex; justify-content: space-between; padding: 15px; align-items: center; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        body { background: var(--bg); color: #fff; font-family: sans-serif; padding: 10px; margin:0; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px; }
         .card { background: var(--card); padding: 15px; border-radius: 12px; text-align: center; border: 1px solid #333; }
-        .card.full { grid-column: span 2; }
-        .card h3 { font-size: 11px; color: #888; text-transform: uppercase; margin-bottom: 5px; }
-        .card p { font-size: 22px; font-weight: bold; margin: 0; color: #fff; }
-        .card i { color: var(--primary); margin-bottom: 5px; font-size: 1.2rem; }
-        .btn { background: var(--primary); color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-size: 14px; }
-        canvas { max-width: 100% !important; margin-top: 20px; background: var(--card); border-radius: 12px; padding: 10px; }
+        .card h3 { font-size: 10px; color: #888; text-transform: uppercase; margin-bottom: 5px; }
+        .card p { font-size: 22px; font-weight: bold; margin: 0; }
+        .chart-box { background: var(--card); margin: 10px; padding: 15px; border-radius: 12px; border: 1px solid #333; }
+        .btn { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <h2 style="font-size: 18px;"><i class="fa-solid fa-chart-pie"></i> Analytics</h2>
+    <div style="padding: 15px; display: flex; justify-content: space-between; align-items: center;">
+        <h2 style="margin:0; font-size: 20px;">Live Stats</h2>
         <button class="btn" onclick="loadData()"><i class="fa-solid fa-rotate"></i> Refresh</button>
     </div>
 
     <div class="grid">
-        <div class="card">
-            <i class="fa-solid fa-eye"></i>
-            <h3>Visits</h3>
-            <p id="v">0</p>
-        </div>
-        <div class="card">
-            <i class="fa-solid fa-mouse-pointer"></i>
-            <h3>Direct</h3>
-            <p id="c">0</p>
-        </div>
-        <div class="card">
-            <i class="fa-brands fa-chrome"></i>
-            <h3>Continue</h3>
-            <p id="cr">0</p>
-        </div>
-        <div class="card">
-            <i class="fa-solid fa-rotate-left"></i>
-            <h3>Go Back</h3>
-            <p id="gb">0</p>
-        </div>
-        <div class="card full">
-            <i class="fa-solid fa-earth-americas"></i>
-            <h3>Top Country</h3>
-            <p id="tc" style="color: #10b981;">--</p>
-        </div>
+        <div class="card"><h3>Visits</h3><p id="v">0</p></div>
+        <div class="card"><h3>Direct</h3><p id="c">0</p></div>
+        <div class="card"><h3>Continue</h3><p id="cr">0</p></div>
+        <div class="card"><h3>Go Back</h3><p id="gb">0</p></div>
     </div>
 
-    <canvas id="mainChart" height="250"></canvas>
+    <div class="chart-box">
+        <h3 style="color:#aaa; font-size: 12px; margin-bottom: 15px;">Country Distribution (%)</h3>
+        <canvas id="countryChart"></canvas>
+    </div>
 
     <script>
-        const URL = 'https://script.google.com/macros/s/AKfycbzEuLYWsnr4WX12EFkfucQtNDAY2l8ajV6sukM5InaylcPzZuRt3hLHQ4a9gAQXKCu4/exec';
+        const URL = 'https://script.google.com/macros/s/AKfycbxY4wSe3uVqD1R8fZIB8DFsG3qPSskbC7xsDPGoaluYbcn6QYQDee4A6utjm-9DAoG0/exec';
         let myChart;
 
         async function loadData() {
-            const btn = document.querySelector('.btn');
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
             try {
                 const res = await fetch(URL + '?action=getStats');
                 const d = await res.json();
@@ -72,23 +49,20 @@
                 document.getElementById('c').innerText = d.totalClicks;
                 document.getElementById('cr').innerText = d.chromeRedirects;
                 document.getElementById('gb').innerText = d.goBackCount;
-                document.getElementById('tc').innerText = d.topCountry;
 
                 if(myChart) myChart.destroy();
-                myChart = new Chart(document.getElementById('mainChart'), {
-                    type: 'bar',
+                myChart = new Chart(document.getElementById('countryChart'), {
+                    type: 'doughnut',
                     data: {
-                        labels: ['Visit', 'Direct', 'Chrome', 'GoBack'],
+                        labels: d.countries.map((name, i) => name + " (" + d.countryCounts[i] + "%)"),
                         datasets: [{
-                            label: 'Traffic Stats',
-                            data: [d.totalVisits, d.totalClicks, d.chromeRedirects, d.goBackCount],
-                            backgroundColor: ['#0084ff', '#10b981', '#f59e0b', '#ef4444']
+                            data: d.countryCounts,
+                            backgroundColor: ['#0084ff', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
                         }]
                     },
-                    options: { plugins: { legend: { display: false } } }
+                    options: { plugins: { legend: { position: 'bottom', labels: { color: '#fff', font: { size: 10 } } } } }
                 });
             } catch(e) { console.log("Load Error"); }
-            btn.innerHTML = '<i class="fa-solid fa-rotate"></i> Refresh';
         }
         window.onload = loadData;
     </script>
