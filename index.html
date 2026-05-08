@@ -2,137 +2,69 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analytics Dashboard - Jacklyn Rose</title>
+    <title>Admin Panel - Analytics</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --primary: #0084ff; --bg: #0b0e11; --card: #151921; --text: #ffffff; }
-        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; }
-        .container { max-width: 1000px; margin: 0 auto; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid #333; padding-bottom: 15px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .card { background: var(--card); padding: 25px; border-radius: 15px; text-align: center; border: 1px solid #222; box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
-        .card i { font-size: 2rem; color: var(--primary); margin-bottom: 10px; }
-        .card h3 { font-size: 13px; color: #888; text-transform: uppercase; margin: 10px 0; }
-        .card p { font-size: 28px; font-weight: bold; margin: 0; color: #fff; }
-        .charts-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .chart-box { background: var(--card); padding: 20px; border-radius: 15px; border: 1px solid #222; min-height: 300px; }
-        h2 { font-size: 16px; margin-bottom: 20px; color: var(--primary); display: flex; align-items: center; gap: 8px; }
-        .refresh-btn { background: var(--primary); border: none; color: white; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        .refresh-btn:hover { background: #0055ff; }
-        @media (max-width: 768px) { .charts-container { grid-template-columns: 1fr; } }
+        :root { --primary: #0084ff; --bg: #0b0e11; --card: #151921; }
+        body { background: var(--bg); color: white; font-family: sans-serif; padding: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 20px; }
+        .card { background: var(--card); padding: 20px; border-radius: 12px; text-align: center; border: 1px solid #333; }
+        .card h3 { font-size: 12px; color: #aaa; text-transform: uppercase; }
+        .card p { font-size: 24px; font-weight: bold; margin-top: 10px; }
+        .charts { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 30px; }
+        .chart-container { background: var(--card); padding: 15px; border-radius: 12px; }
+        .btn { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+        @media (max-width: 768px) { .charts { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <div class="header">
-            <h1><i class="fa-solid fa-chart-line"></i> Analytics Dashboard</h1>
-            <button class="refresh-btn" onclick="fetchAnalytics()">
-                <i class="fa-solid fa-rotate"></i> Refresh Data
-            </button>
-        </div>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h2><i class="fa-solid fa-gauge"></i> Real-time Traffic</h2>
+        <button class="btn" onclick="loadStats()"><i class="fa-solid fa-rotate"></i> Refresh</button>
+    </div>
 
-        <!-- Stats Overview -->
-        <div class="grid">
-            <div class="card">
-                <i class="fa-solid fa-users"></i>
-                <h3>Total Visits</h3>
-                <p id="totalVisits">0</p>
-            </div>
-            <div class="card">
-                <i class="fa-solid fa-hand-pointer"></i>
-                <h3>Direct Clicks</h3>
-                <p id="totalClicks">0</p>
-            </div>
-            <div class="card">
-                <i class="fa-brands fa-facebook"></i>
-                <h3>FB to Chrome</h3>
-                <p id="chromeRedirects">0</p>
-            </div>
-            <div class="card">
-                <i class="fa-solid fa-location-dot"></i>
-                <h3>Top Country</h3>
-                <p id="topCountry">--</p>
-            </div>
-        </div>
+    <div class="grid">
+        <div class="card"><h3>Total Visits</h3><p id="v">0</p></div>
+        <div class="card"><h3>Direct Clicks</h3><p id="c">0</p></div>
+        <div class="card"><h3>FB to Chrome</h3><p id="cr">0</p></div>
+        <div class="card"><h3>Top Country</h3><p id="tc">--</p></div>
+    </div>
 
-        <!-- Charts Section -->
-        <div class="charts-container">
-            <div class="chart-box">
-                <h2><i class="fa-solid fa-chart-bar"></i> Conversion Rate</h2>
-                <canvas id="trafficChart"></canvas>
-            </div>
-            <div class="chart-box">
-                <h2><i class="fa-solid fa-earth-americas"></i> Visitor Countries</h2>
-                <canvas id="countryChart"></canvas>
-            </div>
-        </div>
+    <div class="charts">
+        <div class="chart-container"><canvas id="chart1"></canvas></div>
+        <div class="chart-container"><canvas id="chart2"></canvas></div>
     </div>
 
     <script>
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz3MfTmEC6IhiQp9DvLrsKRFY-ua8x9O6V1z86BtiwCMhQOohRLMCzKP0F7Ulpw0sle/exec';
+        const URL = 'https://script.google.com/macros/s/AKfycbxr9BXhUgsBNQ4P55z87Lfv4CKkc5MZx-GYu75ZcZzV-sT3jygR7U-A3DjLXDxnKgum/exec';
+        let ch1, ch2;
 
-        let trafficChart, countryChart;
-
-        async function fetchAnalytics() {
-            const btn = document.querySelector('.refresh-btn');
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Loading...';
-
+        async function loadStats() {
             try {
-                const response = await fetch(SCRIPT_URL + '?action=getStats');
-                const data = await response.json();
+                const res = await fetch(URL + '?action=getStats');
+                const d = await res.json();
+                
+                document.getElementById('v').innerText = d.totalVisits;
+                document.getElementById('c').innerText = d.totalClicks;
+                document.getElementById('cr').innerText = d.chromeRedirects;
+                document.getElementById('tc').innerText = d.topCountry;
 
-                document.getElementById('totalVisits').innerText = data.totalVisits;
-                document.getElementById('totalClicks').innerText = data.totalClicks;
-                document.getElementById('chromeRedirects').innerText = data.chromeRedirects;
-                document.getElementById('topCountry').innerText = data.topCountry;
+                if(ch1) ch1.destroy(); if(ch2) ch2.destroy();
+                
+                ch1 = new Chart(document.getElementById('chart1'), {
+                    type: 'bar',
+                    data: { labels: ['Visits', 'Clicks', 'FB-to-CR'], datasets: [{ data: [d.totalVisits, d.totalClicks, d.chromeRedirects], backgroundColor: ['#0084ff', '#10b981', '#f59e0b'] }] }
+                });
 
-                updateCharts(data);
-            } catch (error) {
-                console.error("Data fetch error:", error);
-                alert("Could not load data. Make sure you deployed the script as 'Anyone'.");
-            } finally {
-                btn.innerHTML = '<i class="fa-solid fa-rotate"></i> Refresh Data';
-            }
+                ch2 = new Chart(document.getElementById('chart2'), {
+                    type: 'pie',
+                    data: { labels: d.countries, datasets: [{ data: d.countryCounts, backgroundColor: ['#ef4444', '#3b82f6', '#10b981', '#f59e0b'] }] }
+                });
+            } catch(e) { alert("Error loading data!"); }
         }
-
-        function updateCharts(data) {
-            // Destroy existing charts if they exist
-            if (trafficChart) trafficChart.destroy();
-            if (countryChart) countryChart.destroy();
-
-            // Traffic Overview Chart
-            trafficChart = new Chart(document.getElementById('trafficChart'), {
-                type: 'bar',
-                data: {
-                    labels: ['Visits', 'Direct Clicks', 'FB Redirects'],
-                    datasets: [{
-                        label: 'Count',
-                        data: [data.totalVisits, data.totalClicks, data.chromeRedirects],
-                        backgroundColor: ['#3b82f6', '#10b981', '#f59e0b']
-                    }]
-                },
-                options: { responsive: true, plugins: { legend: { display: false } } }
-            });
-
-            // Country Distribution Chart
-            countryChart = new Chart(document.getElementById('countryChart'), {
-                type: 'doughnut',
-                data: {
-                    labels: data.countries,
-                    datasets: [{
-                        data: data.countryCounts,
-                        backgroundColor: ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899']
-                    }]
-                },
-                options: { responsive: true }
-            });
-        }
-
-        // Auto Load
-        window.onload = fetchAnalytics;
+        window.onload = loadStats;
     </script>
 </body>
 </html>
