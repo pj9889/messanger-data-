@@ -1,70 +1,94 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        :root { --primary: #0084ff; --bg: #0b0e11; --card: #1c2128; }
-        body { background: var(--bg); color: #fff; font-family: sans-serif; padding: 10px; margin:0; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px; }
-        .card { background: var(--card); padding: 15px; border-radius: 12px; text-align: center; border: 1px solid #333; }
-        .card h3 { font-size: 10px; color: #888; text-transform: uppercase; margin-bottom: 5px; }
-        .card p { font-size: 22px; font-weight: bold; margin: 0; }
-        .chart-box { background: var(--card); margin: 10px; padding: 15px; border-radius: 12px; border: 1px solid #333; }
-        .btn { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; }
-    </style>
-</head>
-<body>
+function doPost(e) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var logSheet = ss.getSheetByName("Logs") || ss.insertSheet("Logs");
+  var dailySheet = ss.getSheetByName("DailyStats") || ss.insertSheet("DailyStats");
+  
+  // DailyStats শিট সেটআপ
+  if (dailySheet.getRange("A1").getValue() === "") {
+    dailySheet.appendRow(["Date", "Visit", "Click"]);
+  }
 
-    <div style="padding: 15px; display: flex; justify-content: space-between; align-items: center;">
-        <h2 style="margin:0; font-size: 20px;">Live Stats</h2>
-        <button class="btn" onclick="loadData()"><i class="fa-solid fa-rotate"></i> Refresh</button>
-    </div>
+  var data = JSON.parse(e.postData.contents);
+  var eventType = data.event; 
+  var ip = data.ip || "Unknown";
+  var today = new Date().toLocaleDateString(); // আজকের তারিখ (e.g. 5/9/2026)
 
-    <div class="grid">
-        <div class="card"><h3>Visits</h3><p id="v">0</p></div>
-        <div class="card"><h3>Direct</h3><p id="c">0</p></div>
-        <div class="card"><h3>Continue</h3><p id="cr">0</p></div>
-        <div class="card"><h3>Go Back</h3><p id="gb">0</p></div>
-    </div>
+  // ১. Logs শিটে এন্ট্রি (কান্ট্রি ডিটেকশনসহ)
+  var country = "Unknown";
+  try {
+    var res = UrlFetchApp.fetch("http://ip-api.com/json/" + ip);
+    var geo = JSON.parse(res.getContentText());
+    if(geo.status === "success") country = geo.country;
+  } catch(err) {}
+  logSheet.appendRow([new Date(), eventType, country, ip]);
 
-    <div class="chart-box">
-        <h3 style="color:#aaa; font-size: 12px; margin-bottom: 15px;">Country Distribution (%)</h3>
-        <canvas id="countryChart"></canvas>
-    </div>
+  // ২. প্রতিদিনের ডাটা আপডেট লজিক
+  var dailyData = dailySheet.getDataRange().getValues();
+  var rowIndex = -1;
+  
+  for (var i = 1; i < dailyData.length; i++) {
+    if (dailyData[i][0] == today) {
+      rowIndex = i + 1;
+      break;
+    }
+  }
 
-    <script>
-        const URL = 'https://script.google.com/macros/s/AKfycbxY4wSe3uVqD1R8fZIB8DFsG3qPSskbC7xsDPGoaluYbcn6QYQDee4A6utjm-9DAoG0/exec';
-        let myChart;
+  if (rowIndex === -1) {
+    // নতুন দিনের জন্য নতুন রো
+    var visit = (eventType === "Total_Visit") ? 1 : 0;
+    var click = (eventType === "Button_Click") ? 1 : 0;
+    dailySheet.appendRow([today, visit, click]);
+  } else {
+    // আগের রো আপডেট
+    var col = (eventType === "Total_Visit") ? 2 : 3;
+    var currentVal = dailySheet.getRange(rowIndex, col).getValue();
+    dailySheet.getRange(rowIndex, col).setValue(Number(currentVal) + 1);
+  }
 
-        async function loadData() {
-            try {
-                const res = await fetch(URL + '?action=getStats');
-                const d = await res.json();
-                
-                document.getElementById('v').innerText = d.totalVisits;
-                document.getElementById('c').innerText = d.totalClicks;
-                document.getElementById('cr').innerText = d.chromeRedirects;
-                document.getElementById('gb').innerText = d.goBackCount;
+  return ContentService.createTextOutput("Success").setMimeType(ContentService.MimeType.TEXT);
+}
 
-                if(myChart) myChart.destroy();
-                myChart = new Chart(document.getElementById('countryChart'), {
-                    type: 'doughnut',
-                    data: {
-                        labels: d.countries.map((name, i) => name + " (" + d.countryCounts[i] + "%)"),
-                        datasets: [{
-                            data: d.countryCounts,
-                            backgroundColor: ['#0084ff', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
-                        }]
-                    },
-                    options: { plugins: { legend: { position: 'bottom', labels: { color: '#fff', font: { size: 10 } } } } }
-                });
-            } catch(e) { console.log("Load Error"); }
+function doGet(e) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var dailySheet = ss.getSheetByName("DailyStats");
+  var logsSheet = ss.getSheetByName("Logs");
+  
+  if (e.parameter.action === 'getStats') {
+    var dateParam = e.parameter.date || new Date().toLocaleDateString();
+    var dailyData = dailySheet.getDataRange().getValues();
+    var visit = 0, click = 0;
+    
+    for (var i = 1; i < dailyData.length; i++) {
+      if (dailyData[i][0] == dateParam) {
+        visit = dailyData[i][1];
+        click = dailyData[i][2];
+        break;
+      }
+    }
+
+    // কান্ট্রি ডাটা (Logs থেকে)
+    var logs = logsSheet.getDataRange().getValues();
+    var countryMap = {};
+    var total = 0;
+    for (var j = 1; j < logs.length; j++) {
+      var logDate = new Date(logs[j][0]).toLocaleDateString();
+      if (logDate == dateParam) {
+        var c = logs[j][2];
+        if(c && c !== "Unknown") {
+          countryMap[c] = (countryMap[c] || 0) + 1;
+          total++;
         }
-        window.onload = loadData;
-    </script>
-</body>
-</html>
+      }
+    }
+
+    var sortedCountries = Object.keys(countryMap).sort((a,b) => countryMap[b] - countryMap[a]);
+    
+    return ContentService.createTextOutput(JSON.stringify({
+      visits: visit,
+      clicks: click,
+      topCountry: sortedCountries[0] || "N/A",
+      countries: sortedCountries.slice(0, 5),
+      countryCounts: sortedCountries.slice(0, 5).map(name => ((countryMap[name] / total) * 100).toFixed(1))
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
