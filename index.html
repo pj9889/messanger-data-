@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analytics Dashboard</title>
+    <title>Daily Admin Panel</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --primary: #0084ff; --bg: #0b0e11; --card: #1c2128; }
-        body { background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; padding: 15px; margin: 0; }
-        .date-picker { background: var(--card); padding: 15px; border-radius: 15px; margin-bottom: 20px; border: 1px solid #333; display: flex; gap: 10px; align-items: center; }
-        input[type="date"] { background: #2d333b; color: #fff; border: 1px solid #444; padding: 10px; border-radius: 8px; flex-grow: 1; outline: none; font-size: 16px; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .card { background: var(--card); padding: 20px; border-radius: 15px; text-align: center; border: 1px solid #333; }
-        .card h3 { font-size: 12px; color: #888; text-transform: uppercase; margin-bottom: 10px; }
-        .card p { font-size: 28px; font-weight: bold; margin: 0; }
-        .chart-box { background: var(--card); border-radius: 15px; padding: 20px; margin-top: 20px; border: 1px solid #333; }
-        .btn { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        body { background: var(--bg); color: #fff; font-family: sans-serif; padding: 10px; margin: 0; }
+        .date-picker { background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #333; display: flex; gap: 10px; }
+        input[type="date"] { background: #333; color: #fff; border: 1px solid #444; padding: 10px; border-radius: 8px; flex-grow: 1; outline: none; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .card { background: var(--card); padding: 20px; border-radius: 12px; text-align: center; border: 1px solid #333; }
+        .card h3 { font-size: 11px; color: #888; text-transform: uppercase; margin-bottom: 5px; }
+        .card p { font-size: 24px; font-weight: bold; margin: 0; }
+        .chart-box { background: var(--card); border-radius: 12px; padding: 15px; margin-top: 15px; border: 1px solid #333; min-height: 250px; }
+        .btn { background: var(--primary); color: white; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -29,29 +29,25 @@
     <div class="grid">
         <div class="card"><h3>Visits</h3><p id="v">0</p></div>
         <div class="card"><h3>Clicks</h3><p id="c">0</p></div>
-        <div class="card" style="grid-column: span 2;">
-            <h3>Top Country</h3><p id="tc" style="color: #10b981;">--</p>
-        </div>
+        <div class="card" style="grid-column: span 2;"><h3>Top Country</h3><p id="tc" style="color: #10b981;">--</p></div>
     </div>
 
     <div class="chart-box">
-        <h3 style="color:#888; font-size: 12px; text-align: center; margin-bottom: 15px;">COUNTRY PERFORMANCE (%)</h3>
+        <h3 style="color:#888; font-size: 11px; text-align: center; margin-bottom: 10px;">COUNTRY DISTRIBUTION (%)</h3>
         <canvas id="countryChart"></canvas>
     </div>
 
     <script>
-        const URL = 'আপনার_নতুন_WEB_APP_URL';
+        const URL = 'https://script.google.com/macros/s/AKfycbzcE1vKFMrPzCWsX7RAF9Cz9XXb4yB0Y4juVghvWJYx007wRu-o5ou7C8PxPdyAPN-D/exec';
         let myChart;
 
-        // ডিফল্ট আজকের তারিখ সেট করা (YYYY-MM-DD)
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('dateSelector').value = today;
+        // আজকের তারিখ সেট করা
+        document.getElementById('dateSelector').value = new Date().toISOString().split('T')[0];
 
         async function loadData() {
             const date = document.getElementById('dateSelector').value;
             const btn = document.querySelector('.btn');
             btn.innerText = '...';
-            
             try {
                 const res = await fetch(`${URL}?action=getStats&date=${date}`);
                 const d = await res.json();
@@ -70,9 +66,9 @@
                             backgroundColor: ['#0084ff', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
                         }]
                     },
-                    options: { plugins: { legend: { position: 'bottom', labels: { color: '#fff' } } } }
+                    options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#fff', font: {size: 10} } } } }
                 });
-            } catch(e) { alert("No data found!"); }
+            } catch(e) { alert("Data error or No data!"); }
             btn.innerText = 'Show';
         }
         window.onload = loadData;
